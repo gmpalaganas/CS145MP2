@@ -1,3 +1,6 @@
 *.class
-*/*/.class
+*/*/*.class
 */.class
+*.swp
+*/.swp
+*/*/*.swp
