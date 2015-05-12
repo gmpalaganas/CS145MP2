@@ -1,4 +1,4 @@
-package connection;
+package game.connection;
 
 import java.io.*;
 import java.net.*;

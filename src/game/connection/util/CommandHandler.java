@@ -1,4 +1,4 @@
-package connection.util;
+package game.connection.util;
 
 //Handles Extraction of commands and parameters given a message sent by server or client
 public static class CommandHandler{
