@@ -15,4 +15,9 @@ public class Game extends StateBasedGame{
         super(name);
     }
 
+
+    public void initStatesList(GameContainer gc) throws SlickException{
+        
+    }
+
 }
