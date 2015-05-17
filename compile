@@ -1,3 +1,0 @@
-#! /bin/bash
-javac -cp ".:lib/slick.jar:lib/lwjgl.jar" src/Main.java
-
