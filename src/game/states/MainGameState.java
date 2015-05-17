@@ -26,9 +26,9 @@ import org.newdawn.slick.particles.ParticleIO;
 import org.newdawn.slick.particles.ConfigurableEmitter; 
 import org.newdawn.slick.Color;
 
-public class MainGameState extends GameState{
+public class MainGameState extends BasicGameState{
 
-    private int MAIN_GAME_STATE_ID 0;
+    private final int MAIN_GAME_STATE_ID = 0;
 
     public void init(GameContainer gc, StateBasedGame sbg) throws SlickException {
 
