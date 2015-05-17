@@ -29,12 +29,15 @@ import org.newdawn.slick.Color;
 public class MainGameState extends BasicGameState{
 
     private final int MAIN_GAME_STATE_ID = 0;
+    TiledMap map;
 
     public void init(GameContainer gc, StateBasedGame sbg) throws SlickException {
-
+        map = new TiledMap("../res/map/map.tmx");
     }
 
     public void render(GameContainer gc, StateBasedGame sbg, Graphics g) throws SlickException{
+
+        map.render(0,0);
 
     }
 

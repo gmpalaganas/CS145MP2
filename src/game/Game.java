@@ -13,18 +13,16 @@ import game.states.*;
 
 public class Game extends StateBasedGame{
     
-    GameState mainGameState;
+    MainGameState mainGameState;
     
-    public Game(String name){
+    public Game(String name) throws SlickException{
         super(name);
-        
         mainGameState = new MainGameState();
-        
     }
 
 
     public void initStatesList(GameContainer gc) throws SlickException{
-        addState(mainGameState);
+        addState((GameState)mainGameState);
         
     }
 

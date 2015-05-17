@@ -3,7 +3,7 @@ package game;
 import org.newdawn.slick.Graphics;
 import org.newdawn.slick.Animation;
 import org.newdawn.slick.SpriteSheet;
-import org.newdawn.slick.Rectangle;
+import org.newdawn.slick.geom.Rectangle;
 import org.newdawn.slick.SlickException;
 
 import game.point.*;
@@ -27,7 +27,8 @@ public class Unit{
 
     private int size; 
 
-    public Unit(String unitName, String dir, int spriteSize, float health, float mana, float hRegen, float mRegen){
+    public Unit(String unitName, String dir, int spriteSize, float health, float mana, float hRegen, float mRegen)
+        throws SlickException{
         
         resourceDir = dir;
         name = unitName;
