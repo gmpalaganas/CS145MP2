@@ -26,18 +26,26 @@ import org.newdawn.slick.particles.ParticleIO;
 import org.newdawn.slick.particles.ConfigurableEmitter; 
 import org.newdawn.slick.Color;
 
+import game.Unit;
+import game.point.*;
+
 public class MainGameState extends BasicGameState{
 
     private final int MAIN_GAME_STATE_ID = 0;
     TiledMap map;
 
+    private Unit player1;
+
     public void init(GameContainer gc, StateBasedGame sbg) throws SlickException {
         map = new TiledMap("../res/map/map.tmx");
+        player1 = new Unit("Gray", "../res/img/units/", 40, 100, 100, 0.5f, 0.5f);
+        player1.setLocation(315,315,Direction.DOWN);
     }
 
     public void render(GameContainer gc, StateBasedGame sbg, Graphics g) throws SlickException{
 
         map.render(0,0);
+        player1.render(g);
 
     }
 
