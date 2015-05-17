@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="80" height="80" tilewidth="8" tileheight="8">
+ <tileset firstgid="1" name="Plains" tilewidth="8" tileheight="8">
+  <image source="../../../../../Resources/Tilesets/Feaws Tileset Collection/FE 8/Plains.png" width="512" height="512"/>
+ </tileset>
+ <layer name="Tile Layer 1" width="80" height="80">
+  <data encoding="base64" compression="gzip">
+   H4sIAAAAAAAAA+3YMQrCQBCG0YVEey2CB9AzCYJX0lYvJVjkPq4EW5Miujv6itf/85XTL1LqAQAAAABGbJqUtu173bL8zlrtc5v1iGtTfmet9NNPv7j000+/uPTTT7+49NNPv7j000+/uKb0ezq05bfWaGq/Y+63m9Gv/LSn9ptbV8Ht+pWnn376xaWffvrFpZ9++sWln376xfXtfqvs3AxK3z6He3ZpP+/V7JTd2kHp2wEAAAAAAAAAgP/zAOhU6QEAZAAA
+  </data>
+ </layer>
+</map>
