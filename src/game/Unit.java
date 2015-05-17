@@ -42,10 +42,10 @@ public class Unit{
 
         curLocation = new Point(0,0,Direction.DOWN);
 
-        sheetUp = new SpriteSheet(dir + name + "-up.png", size, size);
-        sheetDown = new SpriteSheet(dir + name + "-down.png", size, size);
-        sheetLeft = new SpriteSheet(dir + name + "-left.png", size, size);
-        sheetRight = new SpriteSheet(dir + name + "-right.png", size, size);
+        sheetUp = new SpriteSheet(dir + "/"+ name + "/up.png", size, size);
+        sheetDown = new SpriteSheet(dir + "/"+ name + "/down.png", size, size);
+        sheetLeft = new SpriteSheet(dir + "/"+ name + "/left.png", size, size);
+        sheetRight = new SpriteSheet(dir + "/"+ name + "/right.png", size, size);
         
         float x = curLocation.x;
         float y = curLocation.y;
