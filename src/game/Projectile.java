@@ -55,11 +55,11 @@ public class Projectile{
     }
 
 
-    public setLocation(float x, float y, Direction dir){
+    public void setLocation(float x, float y, Direction dir){
         
         curLocation.x = x;
         curLocation.y = y;
-        curLocation.direction - dir;
+        curLocation.direction = dir;
     
     }
 

@@ -2,4 +2,5 @@
 javac -cp ".:../lib/slick.jar:../lib/lwjgl.jar:../lib/kryo-2.23.1-SNAPSHOT-all-debug.jar:../lib/jsonbeans-0.5.jar" game/*.java
 javac -cp ".:../lib/slick.jar:../lib/lwjgl.jar:../lib/kryo-2.23.1-SNAPSHOT-all-debug.jar:../lib/jsonbeans-0.5.jar" game/*/*.java
 javac -cp ".:../lib/slick.jar:../lib/lwjgl.jar:../lib/kryo-2.23.1-SNAPSHOT-all-debug.jar:../lib/jsonbeans-0.5.jar" Main.java
+javac -cp ".:../lib/slick.jar:../lib/lwjgl.jar:../lib/kryo-2.23.1-SNAPSHOT-all-debug.jar:../lib/jsonbeans-0.5.jar" MainServer.java
 

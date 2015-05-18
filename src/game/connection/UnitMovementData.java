@@ -1,12 +1,14 @@
 package game.connection;
 
 import game.point.*;
-import com.ninja
-import org.newdawn.slick.Input;
+import game.Unit;
 
 public class UnitMovementData{
 
-    public Point point;
-    public Input input;
+    public int unitID;
+    public float x;
+    public float y;
+    public Direction direction;
+    public int delta;
 
 }

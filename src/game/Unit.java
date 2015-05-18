@@ -73,6 +73,23 @@ public class Unit{
 
     }
 
+    public void update(Point p, int delta){
+        
+        if(p.direction == Direction.UP){
+            curAnimation = animUp;
+        }else if(p.direction == Direction.DOWN){
+            curAnimation = animDown;
+        }else if(p.direction == Direction.LEFT){
+            curAnimation = animLeft;
+        }else if(p.direction == Direction.RIGHT){
+            curAnimation = animRight;
+        }
+
+        curLocation = p;
+        curAnimation.update(delta);
+
+    }
+
     public void setLocation(float x, float y, Direction dir){
         curLocation.x = x;
         curLocation.y = y;
@@ -85,6 +102,10 @@ public class Unit{
         curLocation = p;
         hitBox.setLocation(p.x,p.y);
 
+    }
+
+    public Point getLocation(){
+        return curLocation;
     }
         
 
