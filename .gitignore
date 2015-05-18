@@ -7,6 +7,5 @@
 src/ServerTest.java
 src/ClientTest.java
 src/compile_server
-src/run_server
 src/SomeRequest.java
 src/run_client
