@@ -41,13 +41,11 @@ public class MainGameState extends BasicGameState{
     private final int MAIN_GAME_STATE_ID = 0;
     
     private TiledMap map;
-
     private GameClient client;
-
     private Unit player1;
 
     private final int TIMEOUT = 5000;
-
+    
     public MainGameState(GameClient c, String addr) {
         client = c;
 
@@ -106,6 +104,7 @@ public class MainGameState extends BasicGameState{
             if(in.isKeyPressed(Input.KEY_SPACE)){
                 System.out.println("SPAAAAAACE");
                 LogData ld = new LogData();
+                System.out.println("Cur Location (" + (int)p.x + "," + (int)p.y + ")");
                 ld.msg = "SPACE";
                 client.send(ld);
             }else if(in.isKeyDown(Input.KEY_DOWN)){
