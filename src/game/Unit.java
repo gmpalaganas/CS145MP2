@@ -67,8 +67,8 @@ public class Unit{
 
     public void render(Graphics g){
         
-       g.setColor(Color.red);
-       g.draw(hitBox);
+       //g.setColor(Color.red);
+       //g.draw(hitBox);
        curAnimation.draw(curLocation.x,curLocation.y); 
 
     }
@@ -81,10 +81,10 @@ public class Unit{
     }
 
     public void setLocation(Point p){
-        curLocation.x = p.x;
-        curLocation.y = p.y;
-        curLocation.direction = p.direction;
+        
+        curLocation = p;
         hitBox.setLocation(p.x,p.y);
+
     }
         
 
