@@ -15,7 +15,7 @@ Compile
 ------
 
 ```
-javac -cp ".:lib/slick.jar:lib/lwjgl.jar" <file_name>.java
+javac -cp ".:../lib/slick.jar:../lib/lwjgl.jar:../lib/kryo-2.23.1-SNAPSHOT-all-debug.jar:../lib/jsonbeans-0.5.jar" <file_name>.java
 ```
 
 *If you are running on a Linux machine then*
@@ -29,7 +29,7 @@ Run
 ------
 
 ```
-java -cp ".:lib/slick.jar:lib/lwjgl.jar" -Djava.library.path=lib/native Test
+java -cp ".:../lib/slick.jar:../lib/lwjgl.jar:../lib/kryo-2.23.1-SNAPSHOT-all-debug.jar:../lib/jsonbeans-0.5.jar" Test
 ```
 
 *If you are running on a Linux machine then*
