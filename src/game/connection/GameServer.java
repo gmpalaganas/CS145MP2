@@ -36,12 +36,27 @@ public class GameServer{
     private GameServerListener serverListener;
 
     private int playerCount;
+    
+    private UnitMovementData uMData1;
+    private UnitMovementData uMData2;
 
     public GameServer() throws IOException{
 
         server = new Server();
         kryo = server.getKryo();
         serverListener = new GameServerListener();
+        uMData1 = new UnitMovementData();
+        uMData2 = new UnitMovementData();
+
+        uMData1.unitID = 0;
+        uMData1.x = MIN_X;
+        uMData1.y = (int)(MAX_Y / 2);
+        uMData1.direction = Direction.RIGHT;
+
+        uMData2.unitID = 1;
+        uMData2.x = MAX_X;
+        uMData2.y = (int)(MAX_Y / 2);
+        uMData2.direction = Direction.LEFT;
         
         server.addListener((Listener)serverListener);
 
@@ -56,8 +71,10 @@ public class GameServer{
         kryo.register(LogData.class);
         kryo.register(Point.class);
         kryo.register(Direction.class);
-
+        kryo.register(MessageData.class);
+        kryo.register(UnitIDData.class); 
     }
+    
    
     public void start() throws IOException{
         server.start();
@@ -76,8 +93,16 @@ public class GameServer{
        }
 
        public void connected(Connection connection){
-            playerCount++;
-            System.out.println(playerCount);
+           if(playerCount < 2){
+               UnitIDData data = new UnitIDData();
+               data.id = playerCount;
+               connection.sendTCP(data);
+               playerCount++;
+           }
+       }
+
+       public void disconnected(Connection connection){
+            playerCount--;
        }
 
        public void received (Connection connection, Object object){
@@ -95,7 +120,12 @@ public class GameServer{
                         uData.x += uData.delta * 0.1f;
                    }
 
-                   connection.sendUDP(uData);
+                   if(uData.unitID == 0)
+                       uMData1 = uData;
+                   else
+                       uMData2 = uData;
+
+                   server.sendToAllUDP(uData);
 
                }else if(object instanceof ProjectileMovementData){
 
@@ -104,6 +134,12 @@ public class GameServer{
                     LogData ld = new LogData();
                     ld.msg = "SPACE RECEIVED";
                     connection.sendTCP(ld);
+               }else if(object instanceof MessageData){
+                    MessageData data = (MessageData)object;
+                    if(data.msg.equals("GET LOCATIONS")){
+                        connection.sendTCP(uMData1);
+                        connection.sendTCP(uMData2);
+                    }
                }
 
        }

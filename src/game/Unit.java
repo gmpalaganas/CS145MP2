@@ -107,6 +107,10 @@ public class Unit{
     public Point getLocation(){
         return curLocation;
     }
+
+    public String getName(){
+        return name;
+    }
         
 
 }

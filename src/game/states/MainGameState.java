@@ -39,68 +39,82 @@ import game.connection.*;
 public class MainGameState extends BasicGameState{
 
     private final int MAIN_GAME_STATE_ID = 0;
-    
+    private final int NUM_PLAYERS = 2;
+
     private TiledMap map;
     private GameClient client;
-    private Unit player1;
+    private int player;
+    private Unit units[];
 
-    private final int TIMEOUT = 5000;
-    
-    public MainGameState(GameClient c, String addr) {
+    private boolean isFirstLoad;
+
+    public MainGameState(GameClient c, String addr) throws SlickException {
         client = c;
-
-        try{
-
-            Listener listener = new Listener(){
-                
-                public void received (Connection connection, Object object){
-                
-                       if(object instanceof UnitMovementData){
-                           UnitMovementData uData = (UnitMovementData)object;
-
-                           if(uData.unitID == 1){
-                              Point p = new Point(uData.x, uData.y, uData.direction); 
-                              player1.update(p,uData.delta);
-                           }
-                       }else if(object instanceof ProjectileMovementData){
-
-                       }else if(object instanceof LogData){
-                            System.out.println(((LogData)object).msg);
-                       }
-
-                }
-            };
-
-            client.addListener(listener);
-
-            client.connect(TIMEOUT,addr);
-
-        }catch(IOException e){}
+        units = new Unit[NUM_PLAYERS];
+        player = -1;
+        isFirstLoad = true;
     }
 
     public void init(GameContainer gc, StateBasedGame sbg) throws SlickException {
+
+        units[0] = new Unit("Gray", "../res/img/units/", 40, 100, 100, 0.5f, 0.5f);
+
+        units[1] = new Unit("Crystal", "../res/img/units/", 40, 100, 100, 0.5f, 0.5f);
+
+
         map = new TiledMap("../res/map/map.tmx");
-        player1 = new Unit("Gray", "../res/img/units/", 40, 100, 100, 0.5f, 0.5f);
-        player1.setLocation(315,315,Direction.DOWN);
+
+        Listener listener = new Listener(){
+
+            public void received (Connection connection, Object object){
+
+                if(object instanceof UnitMovementData){
+                    UnitMovementData uData = (UnitMovementData)object;
+
+                    Point p = new Point(uData.x, uData.y, uData.direction); 
+                    if(isFirstLoad){
+                        isFirstLoad = false;
+                        units[uData.unitID].setLocation(p);
+                    }
+                    else
+                        units[uData.unitID].update(p,uData.delta);
+
+                }else if(object instanceof ProjectileMovementData){
+
+                }else if(object instanceof LogData){
+                    System.out.println(((LogData)object).msg);
+                }
+
+            }
+        };
+
+        client.addListener(listener);
+
     }
 
     public void render(GameContainer gc, StateBasedGame sbg, Graphics g) throws SlickException{
 
+        MessageData requestLocations = new MessageData();
+        requestLocations.msg = "GET LOCATIONS";
+        client.send(requestLocations);
+
         map.render(0,0);
-        player1.render(g);
+        for(int i = 0; i < NUM_PLAYERS; i++)
+            units[i].render(g);
 
     }
 
     public void update(GameContainer gc, StateBasedGame sbg, int delta) throws SlickException{
 
-            Input in = gc.getInput();
+        Input in = gc.getInput();
+        if(player != -1){
             UnitMovementData uData = new UnitMovementData();
-            Point p = player1.getLocation();
+            Point p = units[player].getLocation();
             uData.x = p.x;
             uData.y = p.y;
-            uData.unitID = 1;
+            uData.unitID = player;
             uData.delta = delta;
-                
+
             if(in.isKeyPressed(Input.KEY_SPACE)){
                 System.out.println("SPAAAAAACE");
                 LogData ld = new LogData();
@@ -120,10 +134,17 @@ public class MainGameState extends BasicGameState{
                 uData.direction = Direction.RIGHT;
                 client.send(uData);
             }      
+        }
     }
 
     public int getID(){
         return MAIN_GAME_STATE_ID;
+    }
+
+    public void setPlayer(int unitID){
+
+        player = unitID;
+
     }
 
 }

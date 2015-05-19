@@ -21,6 +21,7 @@ public class Main{
             container.start();
         }catch(Exception e){
         
+            e.printStackTrace();
         }
 
     }
