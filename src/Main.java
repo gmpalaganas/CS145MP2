@@ -15,7 +15,7 @@ public class Main{
     public static void main(String args[]){
         
         try{
-            Game game = new Game("Game","localhost");
+            Game game = new Game("Magus Arena","localhost");
             GameContainer container = new GameContainer(game);
 
             container.start();
