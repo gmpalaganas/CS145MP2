@@ -55,6 +55,8 @@ public class GameClient{
         kryo.register(Direction.class);
         kryo.register(MessageData.class);
         kryo.register(UnitIDData.class);
+        kryo.register(UnitResourceData.class);
+        kryo.register(UnitStatData.class);
 
      }
 

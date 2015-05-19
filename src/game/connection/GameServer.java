@@ -32,6 +32,7 @@ public class GameServer{
     private final int TCP_PORT = 8889;
 
     private final int UNIT_RADIUS = 20;
+    private final int NUM_PLAYERS = 2;
 
     private Server server;
     private Kryo kryo;
@@ -39,30 +40,46 @@ public class GameServer{
 
     private int playerCount;
     
-    private UnitMovementData uMData1;
-    private UnitMovementData uMData2;
+    private UnitMovementData uMData[];
+    private UnitStatData uSData[];
+    private UnitResourceData uRData[];
+    
+    private RegenThread regenThread;
 
     public GameServer() throws IOException{
 
         server = new Server();
         kryo = server.getKryo();
         serverListener = new GameServerListener();
-        uMData1 = new UnitMovementData();
-        uMData2 = new UnitMovementData();
 
-        uMData1.unitID = 0;
-        uMData1.x = MIN_X;
-        uMData1.y = (int)(MAX_Y / 2);
-        uMData1.direction = Direction.RIGHT;
+        uRData = new UnitResourceData[NUM_PLAYERS];
+        uSData = new UnitStatData[NUM_PLAYERS];
+        uMData = new UnitMovementData[NUM_PLAYERS];
 
-        uMData2.unitID = 1;
-        uMData2.x = MAX_X;
-        uMData2.y = (int)(MAX_Y / 2);
-        uMData2.direction = Direction.LEFT;
+        for(int i = 0; i < NUM_PLAYERS; i++){
+            uMData[i] = new UnitMovementData();
+            uSData[i] = new UnitStatData();
+            uRData[i] = new UnitResourceData();
+            uRData[i].unitID = i;
+            
+        }
+
+
+        uMData[0].unitID = 0;
+        uMData[0].x = MIN_X;
+        uMData[0].y = (int)(MAX_Y / 2);
+        uMData[0].direction = Direction.RIGHT;
+
+        uMData[1].unitID = 1;
+        uMData[1].x = MAX_X;
+        uMData[1].y = (int)(MAX_Y / 2);
+        uMData[1].direction = Direction.LEFT;
         
         server.addListener((Listener)serverListener);
 
         registerClasses();
+
+        regenThread = new RegenThread();
 
     }
 
@@ -75,6 +92,9 @@ public class GameServer{
         kryo.register(Direction.class);
         kryo.register(MessageData.class);
         kryo.register(UnitIDData.class); 
+        kryo.register(UnitResourceData.class);
+        kryo.register(UnitStatData.class);
+
     }
     
    
@@ -89,8 +109,8 @@ public class GameServer{
 
     public boolean checkPlayerCollision(){
         
-        boolean ret = inRange(uMData1.x,uMData2.x, UNIT_RADIUS);
-        ret &= inRange(uMData1.y, uMData2.y, UNIT_RADIUS);
+        boolean ret = inRange(uMData[0].x,uMData[1].x, UNIT_RADIUS);
+        ret &= inRange(uMData[0].y, uMData[1].y, UNIT_RADIUS);
 
         return ret;
     }
@@ -102,11 +122,8 @@ public class GameServer{
     }
 
     public void updateLocation(UnitMovementData data){
-
-        if(data.unitID == 0)
-            uMData1 = data;
-        else
-            uMData2 = data;
+        
+        uMData[data.unitID] = data;
 
     }
 
@@ -124,10 +141,22 @@ public class GameServer{
                connection.sendTCP(data);
                playerCount++;
            }
+
+           if(playerCount == 1){
+                MessageData data = new MessageData();
+                data.type = "REQUEST";
+                data.msg = "UNIT STATS";
+                connection.sendTCP(data);
+                regenThread.start();
+           }
        }
 
        public void disconnected(Connection connection){
             playerCount--;
+            if(playerCount < 1){
+                server.close();
+                System.exit(0);
+            }
        }
 
        public void received (Connection connection, Object object){
@@ -149,7 +178,6 @@ public class GameServer{
 
 
                    updateLocation(uData);
-
                    
                    if(checkPlayerCollision()){
                         uData.x = x;
@@ -168,12 +196,52 @@ public class GameServer{
                }else if(object instanceof MessageData){
                     MessageData data = (MessageData)object;
                     if(data.msg.equals("GET LOCATIONS")){
-                        connection.sendUDP(uMData1);
-                        connection.sendUDP(uMData2);
+                        connection.sendUDP(uMData[0]);
+                        connection.sendUDP(uMData[1]);
                     }
+               }else if(object instanceof UnitStatData){
+                    UnitStatData data = (UnitStatData)object;
+                    uSData[data.unitID] = data;                    
+                    uRData[data.unitID].health = data.maxHealth;
+                    uRData[data.unitID].mana = 0;
+                    
                }
 
        }
 
     }
+
+    private class RegenThread extends Thread{
+
+        private boolean isRunning = true;
+            
+        public void run(){
+            
+           try{
+
+               while(isRunning){
+                   for(int i = 0; i < NUM_PLAYERS; i++){
+
+                       if(uRData[i].mana < uSData[i].maxMana)
+                            uRData[i].mana += uSData[i].manaRegen/10f;
+                        
+                       if(uRData[i].health < uSData[i].maxHealth)
+                           uRData[i].health += uSData[i].healthRegen/10f;
+
+
+                        server.sendToAllUDP(uRData[i]);
+                   }                                         
+                   Thread.sleep(100);
+               }
+
+           }catch(InterruptedException e){}
+
+        }
+
+        public void terminate(){
+            isRunning = false;
+        }
+
+    }
+
 }

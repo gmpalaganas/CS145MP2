@@ -8,6 +8,7 @@ import org.newdawn.slick.SlickException;
 import org.newdawn.slick.Color;
 
 import game.point.*;
+import game.connection.*;
 
 public class Unit{
 
@@ -17,8 +18,10 @@ public class Unit{
     private Animation curAnimation;
     
     private Rectangle hitBox;
+    private Rectangle healthBar, manaBar;
 
     private float health, mana;
+    private float maxHealth, maxMana;
     private float healthRegen, manaRegen;
 
     private Point curLocation;
@@ -29,6 +32,7 @@ public class Unit{
     private int size; 
 
     private final int ANIMATION_SPEED = 700;
+    private final int REGEN_INTERVAL = 100;
 
     public Unit(String unitName, String dir, int spriteSize, float health, float mana, float hRegen, float mRegen)
         throws SlickException{
@@ -40,8 +44,11 @@ public class Unit{
         healthRegen = hRegen;
         manaRegen = manaRegen;
 
-        this.health = health;
-        this.mana = mana;
+        maxHealth = health;
+        maxMana = mana;
+
+        this.mana = 0;
+        this.health = maxHealth;
 
         curLocation = new Point(0,0,Direction.DOWN);
 
@@ -62,6 +69,8 @@ public class Unit{
 
 
         hitBox = new Rectangle(x,y,size,size);
+        healthBar = new Rectangle(x, y + (size/2), size, 5);
+        manaBar = new Rectangle(x, y + (size/2) + 5, size, 5);
 
     }
 
@@ -69,7 +78,38 @@ public class Unit{
         
        //g.setColor(Color.red);
        //g.draw(hitBox);
+       drawHealthBar(g);
+       drawManaBar(g);
        curAnimation.draw(curLocation.x,curLocation.y); 
+
+    }
+
+    public void drawManaBar(Graphics g){
+        
+        float fillWidth = (mana / maxMana) * manaBar.getWidth();
+        Rectangle fill = new Rectangle(manaBar.getX(), manaBar.getY(), fillWidth, manaBar.getHeight());
+        
+        Color prevColor = g.getColor();
+        g.setColor(Color.black);
+        g.draw(manaBar);
+        g.setColor(Color.blue);
+        g.fill(fill);
+        g.setColor(prevColor);
+
+    }
+
+
+    public void drawHealthBar(Graphics g){
+        
+        float fillWidth = (health / maxHealth) * healthBar.getWidth();
+        Rectangle fill = new Rectangle(healthBar.getX() , healthBar.getY(), fillWidth, healthBar.getHeight() );
+        
+        Color prevColor = g.getColor();
+        g.setColor(Color.black);
+        g.draw(healthBar);
+        g.setColor(Color.red);
+        g.fill(fill);
+        g.setColor(prevColor);
 
     }
 
@@ -92,18 +132,13 @@ public class Unit{
 
     }
 
-    public void setLocation(float x, float y, Direction dir){
-        curLocation.x = x;
-        curLocation.y = y;
-        curLocation.direction = dir;
-        hitBox.setLocation(x,y);
-    }
 
     public void setLocation(Point p){
         
         curLocation = p;
         hitBox.setLocation(p.x,p.y);
-
+        manaBar.setLocation(p.x, p.y  + size + 5);
+        healthBar.setLocation(p.x , p.y + size);
     }
 
     public Rectangle getHitBox(){
@@ -117,7 +152,28 @@ public class Unit{
     public String getName(){
         return name;
     }
+
+    public void setHealth(float h){
+        health = h;
+    }
+
+    public void setMana(float m){
+        mana = m;
+    }
+
+    public void setResources(UnitResourceData data){
         
+        health = data.health;
+        mana = data.mana;
+
+    }
+
+    public float getHealth(){ return health; }
+    public float getMana(){ return mana; }
+    public float getHealthRegen(){ return healthRegen; }
+    public float getManaRegen(){ return manaRegen; }
+    public float getMaxHealth(){ return maxHealth; }
+    public float getMaxMana(){ return maxMana; }
 
 }
 

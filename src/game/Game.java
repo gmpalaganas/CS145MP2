@@ -24,7 +24,15 @@ public class Game extends StateBasedGame{
     private GameClient client;
 
     private final int TIMEOUT = 5000;
-    
+
+    private final float MAX_HEALTH = 100f;
+    private final float MAX_MANA = 100f;
+    private final float MANA_REGEN = 6.5f;
+    private final float HEALTH_REGEN = 2f;
+
+    private final int NUM_PLAYERS = 2;
+
+
     public Game(String name, String addr) throws SlickException,IOException{
         super(name);
         client = new GameClient();
@@ -38,6 +46,22 @@ public class Game extends StateBasedGame{
                     if(object instanceof UnitIDData){
                         UnitIDData data = (UnitIDData)object; 
                         mainGameState.setPlayer(data.id);      
+                    }else if(object instanceof MessageData){
+                        MessageData data = (MessageData)object;
+                        if(data.type.equals("REQUEST")){
+                            if(data.msg.equals("UNIT STATS")){
+                                for(int i = 0; i < NUM_PLAYERS; i++){
+                                    UnitStatData udata = new UnitStatData();
+                                    udata.unitID = i;
+                                    udata.maxHealth = MAX_HEALTH;
+                                    udata.maxMana = MAX_MANA;
+                                    udata.healthRegen = HEALTH_REGEN;
+                                    udata.manaRegen = MANA_REGEN;
+                                    client.send(udata);
+                                }
+
+                            }
+                        }
                     }
 
                 }
@@ -48,7 +72,8 @@ public class Game extends StateBasedGame{
 
 
         }catch(IOException e){ 
-            e.printStackTrace();
+            System.out.println("Unable to connect to server");
+            System.exit(1);
         }
 
 

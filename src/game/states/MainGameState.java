@@ -41,6 +41,11 @@ public class MainGameState extends BasicGameState{
     private final int MAIN_GAME_STATE_ID = 0;
     private final int NUM_PLAYERS = 2;
 
+    private final float MAX_HEALTH = 100f;
+    private final float MAX_MANA = 100f;
+    private final float MANA_REGEN = 6.5f;
+    private final float HEALTH_REGEN = 2f;
+
     private TiledMap map;
     private GameClient client;
     private int player;
@@ -57,10 +62,8 @@ public class MainGameState extends BasicGameState{
 
     public void init(GameContainer gc, StateBasedGame sbg) throws SlickException {
 
-        units[0] = new Unit("Gray", "../res/img/units/", 40, 100, 100, 0.5f, 0.5f);
-
-        units[1] = new Unit("Crystal", "../res/img/units/", 40, 100, 100, 0.5f, 0.5f);
-
+        units[0] = new Unit("Gray", "../res/img/units/", 40, MAX_HEALTH, MAX_MANA, HEALTH_REGEN, MANA_REGEN);
+        units[1] = new Unit("Crystal", "../res/img/units/", 40, MAX_HEALTH, MAX_MANA, HEALTH_REGEN, MANA_REGEN);
 
         map = new TiledMap("../res/map/map.tmx");
 
@@ -79,12 +82,15 @@ public class MainGameState extends BasicGameState{
                     else
                         units[uData.unitID].update(p,uData.delta);
 
-                }else if(object instanceof ProjectileMovementData){
+                }else if(object instanceof UnitResourceData){
+                   UnitResourceData rdata = (UnitResourceData)object;
+                   units[rdata.unitID].setResources(rdata);
+                }
+                else if(object instanceof ProjectileMovementData){
 
                 }else if(object instanceof LogData){
                     System.out.println(((LogData)object).msg);
                 }
-
             }
         };
 
