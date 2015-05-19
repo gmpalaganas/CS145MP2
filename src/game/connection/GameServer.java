@@ -9,7 +9,6 @@ import game.Projectile;
 import game.Unit;
 import org.newdawn.slick.Input;
 
-
 import java.util.ArrayList;
 
 import org.newdawn.slick.Graphics;
@@ -35,6 +34,8 @@ public class GameServer{
     private Server server;
     private Kryo kryo;
     private GameServerListener serverListener;
+
+    private int playerCount;
 
     public GameServer() throws IOException{
 
@@ -63,11 +64,20 @@ public class GameServer{
         server.bind(TCP_PORT,UDP_PORT);
     }
 
+    public void close() throws IOException{
+         server.close();
+    }
+
 
     private class GameServerListener extends Listener{
 
        public GameServerListener(){
             
+       }
+
+       public void connected(Connection connection){
+            playerCount++;
+            System.out.println(playerCount);
        }
 
        public void received (Connection connection, Object object){
@@ -92,7 +102,7 @@ public class GameServer{
                }else if(object instanceof LogData){
                     System.out.println(((LogData)object).msg);
                     LogData ld = new LogData();
-                    ld.msg = "SPACE ACK";
+                    ld.msg = "SPACE RECEIVED";
                     connection.sendTCP(ld);
                }
 
