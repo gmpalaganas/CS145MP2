@@ -107,6 +107,10 @@ public class MainGameState extends BasicGameState{
     public void update(GameContainer gc, StateBasedGame sbg, int delta) throws SlickException{
 
         Input in = gc.getInput();
+
+        if(units[0].getHitBox().intersects(units[1].getHitBox()))
+            System.out.println("BUNGUAN");
+
         if(player != -1){
             UnitMovementData uData = new UnitMovementData();
             Point p = units[player].getLocation();
@@ -135,6 +139,7 @@ public class MainGameState extends BasicGameState{
                 client.send(uData);
             }      
         }
+
     }
 
     public int getID(){
@@ -146,5 +151,4 @@ public class MainGameState extends BasicGameState{
         player = unitID;
 
     }
-
 }

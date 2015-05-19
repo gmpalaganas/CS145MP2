@@ -85,7 +85,9 @@ public class Unit{
             curAnimation = animRight;
         }
 
+
         curLocation = p;
+        setLocation(p);
         curAnimation.update(delta);
 
     }
@@ -102,6 +104,10 @@ public class Unit{
         curLocation = p;
         hitBox.setLocation(p.x,p.y);
 
+    }
+
+    public Rectangle getHitBox(){
+        return hitBox;
     }
 
     public Point getLocation(){

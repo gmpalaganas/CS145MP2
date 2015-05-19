@@ -31,6 +31,8 @@ public class GameServer{
     private final int UDP_PORT = 8888;
     private final int TCP_PORT = 8889;
 
+    private final int UNIT_RADIUS = 20;
+
     private Server server;
     private Kryo kryo;
     private GameServerListener serverListener;
@@ -85,6 +87,29 @@ public class GameServer{
          server.close();
     }
 
+    public boolean checkPlayerCollision(){
+        
+        boolean ret = inRange(uMData1.x,uMData2.x, UNIT_RADIUS);
+        ret &= inRange(uMData1.y, uMData2.y, UNIT_RADIUS);
+
+        return ret;
+    }
+
+    public boolean inRange(float x, float center, int radius){
+        
+        return (center - radius) <= x && (center + radius) >= x;
+
+    }
+
+    public void updateLocation(UnitMovementData data){
+
+        if(data.unitID == 0)
+            uMData1 = data;
+        else
+            uMData2 = data;
+
+    }
+
 
     private class GameServerListener extends Listener{
 
@@ -109,6 +134,8 @@ public class GameServer{
                if(object instanceof UnitMovementData){
 
                    UnitMovementData uData = (UnitMovementData)object;
+                   float x = uData.x;
+                   float y = uData.y;
                    
                    if(uData.direction == Direction.DOWN && uData.y <= MAX_Y){
                         uData.y += uData.delta * 0.1f;
@@ -120,12 +147,16 @@ public class GameServer{
                         uData.x += uData.delta * 0.1f;
                    }
 
-                   if(uData.unitID == 0)
-                       uMData1 = uData;
-                   else
-                       uMData2 = uData;
 
-                   server.sendToAllUDP(uData);
+                   updateLocation(uData);
+
+                   
+                   if(checkPlayerCollision()){
+                        uData.x = x;
+                        uData.y = y;
+                        updateLocation(uData);
+                   }
+                   //server.sendToAllUDP(uData);
 
                }else if(object instanceof ProjectileMovementData){
 
@@ -137,8 +168,8 @@ public class GameServer{
                }else if(object instanceof MessageData){
                     MessageData data = (MessageData)object;
                     if(data.msg.equals("GET LOCATIONS")){
-                        connection.sendTCP(uMData1);
-                        connection.sendTCP(uMData2);
+                        connection.sendUDP(uMData1);
+                        connection.sendUDP(uMData2);
                     }
                }
 
