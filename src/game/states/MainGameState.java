@@ -2,7 +2,7 @@ package game.states;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
 
@@ -46,24 +46,45 @@ public class MainGameState extends BasicGameState{
     private final float MANA_REGEN = 6.5f;
     private final float HEALTH_REGEN = 2f;
 
+    private final String RESOURCE_DIR = "../res/img/";
+
     private TiledMap map;
     private GameClient client;
     private int player;
     private Unit units[];
+    private String projectileNames[];
+    private SpriteSheet projectileSheets[];
+    private Animation projectileAnimation[];
 
     private boolean isFirstLoad;
+
+    private HashMap<Integer,Projectile> projectiles;
 
     public MainGameState(GameClient c, String addr) throws SlickException {
         client = c;
         units = new Unit[NUM_PLAYERS];
+        projectileNames = new String[NUM_PLAYERS + 1];
+        projectileSheets = new SpriteSheet[NUM_PLAYERS + 1];
+        projectileAnimation = new Animation[NUM_PLAYERS + 1];
+        projectileNames[0] = "violet";
+        projectileNames[1] = "snow";
+        projectileNames[2] = "fire";
         player = -1;
         isFirstLoad = true;
+       
+        if(projectiles == null)
+            projectiles = new HashMap<Integer,Projectile>();
     }
 
     public void init(GameContainer gc, StateBasedGame sbg) throws SlickException {
 
-        units[0] = new Unit("Gray", "../res/img/units/", 40, MAX_HEALTH, MAX_MANA, HEALTH_REGEN, MANA_REGEN);
-        units[1] = new Unit("Crystal", "../res/img/units/", 40, MAX_HEALTH, MAX_MANA, HEALTH_REGEN, MANA_REGEN);
+        units[0] = new Unit("Gray", RESOURCE_DIR + "units/", 40, MAX_HEALTH, MAX_MANA, HEALTH_REGEN, MANA_REGEN);
+        units[1] = new Unit("Crystal", RESOURCE_DIR + "units/", 40, MAX_HEALTH, MAX_MANA, HEALTH_REGEN, MANA_REGEN);
+
+        for(int i = 0; i < NUM_PLAYERS + 1; i++){
+            projectileSheets[i] = new SpriteSheet(RESOURCE_DIR + "projectiles/" + projectileNames[i] + ".png",16,16); 
+            projectileAnimation[i] = new Animation(projectileSheets[i],600);
+        }
 
         map = new TiledMap("../res/map/map.tmx");
 
@@ -87,7 +108,11 @@ public class MainGameState extends BasicGameState{
                    units[rdata.unitID].setResources(rdata);
                 }
                 else if(object instanceof ProjectileMovementData){
-
+                    ProjectileMovementData pmdata = (ProjectileMovementData)object;
+                    projectiles.get(pmdata.projectileID).setLocation(pmdata.point);
+                }else if(object instanceof NewProjectileData){
+                    NewProjectileData npdata = (NewProjectileData)object;
+                    fire(npdata);
                 }else if(object instanceof LogData){
                     System.out.println(((LogData)object).msg);
                 }
@@ -95,6 +120,9 @@ public class MainGameState extends BasicGameState{
         };
 
         client.addListener(listener);
+        MessageData projRequest = new MessageData();
+        projRequest.msg = "GET PROJECTILES";
+        client.send(projRequest);
 
     }
 
@@ -105,14 +133,19 @@ public class MainGameState extends BasicGameState{
         client.send(requestLocations);
 
         map.render(0,0);
+
         for(int i = 0; i < NUM_PLAYERS; i++)
             units[i].render(g);
+
+        renderProjectiles(g);
+
 
     }
 
     public void update(GameContainer gc, StateBasedGame sbg, int delta) throws SlickException{
 
         Input in = gc.getInput();
+        updateProjectiles(delta);
 
         if(units[0].getHitBox().intersects(units[1].getHitBox()))
             System.out.println("BUNGUAN");
@@ -143,7 +176,17 @@ public class MainGameState extends BasicGameState{
             }else if(in.isKeyDown(Input.KEY_RIGHT)){
                 uData.direction = Direction.RIGHT;
                 client.send(uData);
-            }      
+            }
+
+            if(in.isKeyPressed(Input.KEY_Z)){
+                
+                NewProjectileData nProjData = new NewProjectileData();
+                nProjData.unitID = player;
+                nProjData.source = units[player].getLocation();
+                client.send(nProjData);
+                
+            
+            }
         }
 
     }
@@ -155,6 +198,56 @@ public class MainGameState extends BasicGameState{
     public void setPlayer(int unitID){
 
         player = unitID;
+
+    }
+
+    public synchronized void fire(NewProjectileData data){
+        
+        int incX = 14;
+        int incY = 16;
+
+        data.source.x += incX;
+        data.source.y += incY;
+        
+        try{
+            SpriteSheet sheet = projectileSheets[data.unitID];
+            Animation anim = projectileAnimation[data.unitID];
+            String name = projectileNames[data.unitID];
+            Projectile newPew = new Projectile(name,sheet,anim,16,10,data.source,data.unitID);
+            projectiles.put(data.projectileID,newPew);
+        }catch(SlickException e){
+
+        }
+
+    
+    }
+
+
+    public synchronized void updateProjectiles(int delta){
+        
+
+        for(Integer i:projectiles.keySet()){
+            
+            int id = i.intValue();
+            ProjectileMovementData data = new ProjectileMovementData();
+            data.projectileID = id;
+            data.point = projectiles.get(i).getLocation();
+            data.unitID = projectiles.get(i).getSourceID();
+            data.delta = delta;
+            client.send(data);
+
+        }
+        
+
+    }
+
+    public synchronized void renderProjectiles(Graphics g){
+        
+        for(Projectile p : projectiles.values()){
+            
+            p.render(g);
+
+        }
 
     }
 }

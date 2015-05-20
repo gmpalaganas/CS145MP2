@@ -20,6 +20,7 @@ import org.newdawn.slick.Color;
 
 
 import java.io.*;
+import java.util.HashMap;
 
 public class GameServer{
 
@@ -45,6 +46,9 @@ public class GameServer{
     private UnitResourceData uRData[];
     
     private RegenThread regenThread;
+    private int curProjectileID;
+
+    private HashMap<Integer, ProjectileMovementData> pMData; 
 
     public GameServer() throws IOException{
 
@@ -55,6 +59,8 @@ public class GameServer{
         uRData = new UnitResourceData[NUM_PLAYERS];
         uSData = new UnitStatData[NUM_PLAYERS];
         uMData = new UnitMovementData[NUM_PLAYERS];
+
+        pMData = new HashMap<Integer, ProjectileMovementData>();
 
         for(int i = 0; i < NUM_PLAYERS; i++){
             uMData[i] = new UnitMovementData();
@@ -94,6 +100,7 @@ public class GameServer{
         kryo.register(UnitIDData.class); 
         kryo.register(UnitResourceData.class);
         kryo.register(UnitStatData.class);
+        kryo.register(NewProjectileData.class);
 
     }
     
@@ -187,6 +194,20 @@ public class GameServer{
                    //server.sendToAllUDP(uData);
 
                }else if(object instanceof ProjectileMovementData){
+                   ProjectileMovementData pmdata = (ProjectileMovementData)object;
+                    
+                   float move = pmdata.delta * 0.25f;
+
+                   switch(pmdata.point.direction){
+                       case UP: { pmdata.point.y -= move; }; break;
+                       case DOWN: { pmdata.point.y += move; }; break;
+                       case RIGHT: { pmdata.point.x += move; }; break;
+                       case LEFT: { pmdata.point.x -= move; }; break;
+                   }
+
+                   pMData.put(pmdata.projectileID,pmdata);
+
+                   server.sendToAllUDP(pmdata);
 
                }else if(object instanceof LogData){
                     System.out.println(((LogData)object).msg);
@@ -198,6 +219,16 @@ public class GameServer{
                     if(data.msg.equals("GET LOCATIONS")){
                         connection.sendUDP(uMData[0]);
                         connection.sendUDP(uMData[1]);
+                        for(ProjectileMovementData mdata : pMData.values())
+                            connection.sendUDP(mdata);
+                    }else if(data.msg.equals("GET PROJECTILES")){
+                        for( ProjectileMovementData dat : pMData.values() ){
+                            NewProjectileData npd = new NewProjectileData();
+                            npd.unitID = dat.unitID;
+                            npd.projectileID = dat.projectileID;
+                            npd.source = dat.point;
+                            connection.sendUDP(npd);
+                        }
                     }
                }else if(object instanceof UnitStatData){
                     UnitStatData data = (UnitStatData)object;
@@ -205,6 +236,12 @@ public class GameServer{
                     uRData[data.unitID].health = data.maxHealth;
                     uRData[data.unitID].mana = 0;
                     
+               }else if(object instanceof NewProjectileData){
+                    NewProjectileData data = (NewProjectileData)object;
+                    data.projectileID = curProjectileID;
+                    server.sendToAllUDP(data);
+                    curProjectileID++;
+
                }
 
        }

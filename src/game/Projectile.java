@@ -12,7 +12,6 @@ import game.point.*;
 public class Projectile{
 
     private String name;
-    private String sourceName;
     private String resourceDir;
 
     private SpriteSheet sheet;
@@ -27,10 +26,11 @@ public class Projectile{
 
     private final int ANIMATION_SPEED = 1400;
 
-    public Projectile(String name,String source, String dir, int spriteSize, float dmg, Point p) throws SlickException{
+    private final int unitID;
+
+    public Projectile(String name, String dir, int spriteSize, float dmg, Point p) throws SlickException{
         
        resourceDir = dir;
-       sourceName = source;
        this.name = name;
 
        size = spriteSize;
@@ -42,11 +42,31 @@ public class Projectile{
 
        anim = new Animation(sheet,ANIMATION_SPEED);
 
-        hitBox = new Rectangle(curLocation.x, curLocation.y, size, size); 
+       hitBox = new Rectangle(curLocation.x, curLocation.y, size, size); 
 
 
+       unitID = 0;
 
     }
+
+    public Projectile(String name, SpriteSheet sSheet, Animation a, int spriteSize, float dmg, Point p, int id) throws SlickException{
+        
+       this.name = name;
+
+       size = spriteSize;
+       damage = dmg;
+
+       curLocation = p;
+
+       sheet = sSheet;
+
+       anim = a;
+
+       hitBox = new Rectangle(curLocation.x, curLocation.y, size, size); 
+       unitID = id;
+
+    }
+
 
     public void render(Graphics g){
        
@@ -68,6 +88,14 @@ public class Projectile{
         curLocation = p;
         hitBox.setLocation(p.x,p.y);
 
+    }
+
+    public Point getLocation(){
+        return curLocation;
+    }
+
+    public int getSourceID(){
+        return unitID;
     }
     
 }

@@ -6,6 +6,8 @@ public class Point{
     public float y;
     public Direction direction;
 
+    public Point(){ }
+
     public Point(float x, float y, Direction direction){
         
         this.x = x;
