@@ -23,6 +23,7 @@ public class Projectile{
 
     private int size;
     private float damage;
+    private float manaCost;
 
     private final int ANIMATION_SPEED = 1400;
 
@@ -52,15 +53,12 @@ public class Projectile{
     public Projectile(String name, SpriteSheet sSheet, Animation a, int spriteSize, float dmg, Point p, int id) throws SlickException{
         
        this.name = name;
-
        size = spriteSize;
        damage = dmg;
-
        curLocation = p;
-
        sheet = sSheet;
-
        anim = a;
+       manaCost = 10;
 
        hitBox = new Rectangle(curLocation.x, curLocation.y, size, size); 
        unitID = id;
@@ -72,6 +70,10 @@ public class Projectile{
        
         anim.draw(curLocation.x,curLocation.y);
 
+    }
+
+    public Rectangle getHitBox(){
+        return hitBox;
     }
 
 
@@ -98,4 +100,11 @@ public class Projectile{
         return unitID;
     }
     
+    public float getDamage(){
+        return damage;
+    }
+
+    public float getManaCost(){
+        return manaCost;
+    }
 }

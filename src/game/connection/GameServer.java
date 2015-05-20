@@ -101,6 +101,9 @@ public class GameServer{
         kryo.register(UnitResourceData.class);
         kryo.register(UnitStatData.class);
         kryo.register(NewProjectileData.class);
+        kryo.register(ProjectileRemovalData.class);
+        kryo.register(HitData.class);
+        kryo.register(ManaUseData.class);
 
     }
     
@@ -174,13 +177,13 @@ public class GameServer{
                    float y = uData.y;
                    
                    if(uData.direction == Direction.DOWN && uData.y <= MAX_Y){
-                        uData.y += uData.delta * 0.1f;
+                        uData.y += uData.delta * 0.15f;
                    }else if(uData.direction == Direction.UP && uData.y >= MIN_Y){
-                        uData.y -= uData.delta * 0.1f;
+                        uData.y -= uData.delta * 0.15f;
                    }else if(uData.direction == Direction.LEFT && uData.x >= MIN_X){
-                        uData.x -= uData.delta * 0.1f;
+                        uData.x -= uData.delta * 0.15f;
                    }else if(uData.direction == Direction.RIGHT && uData.x <= MAX_X){
-                        uData.x += uData.delta * 0.1f;
+                        uData.x += uData.delta * 0.15f;
                    }
 
 
@@ -205,8 +208,10 @@ public class GameServer{
                        case LEFT: { pmdata.point.x -= move; }; break;
                    }
 
-                   pMData.put(pmdata.projectileID,pmdata);
-
+                   synchronized(pMData){
+                       pMData.put(pmdata.projectileID,pmdata);
+                   }
+                   
                    server.sendToAllUDP(pmdata);
 
                }else if(object instanceof LogData){
@@ -219,8 +224,10 @@ public class GameServer{
                     if(data.msg.equals("GET LOCATIONS")){
                         connection.sendUDP(uMData[0]);
                         connection.sendUDP(uMData[1]);
-                        for(ProjectileMovementData mdata : pMData.values())
-                            connection.sendUDP(mdata);
+                        synchronized(pMData){
+                            for(ProjectileMovementData mdata : pMData.values())
+                                connection.sendUDP(mdata);
+                        }
                     }else if(data.msg.equals("GET PROJECTILES")){
                         for( ProjectileMovementData dat : pMData.values() ){
                             NewProjectileData npd = new NewProjectileData();
@@ -241,6 +248,24 @@ public class GameServer{
                     data.projectileID = curProjectileID;
                     server.sendToAllUDP(data);
                     curProjectileID++;
+               }else if(object instanceof ProjectileRemovalData){
+                    ProjectileRemovalData data = (ProjectileRemovalData)object;
+                    synchronized(pMData){
+                        pMData.remove(data.projectileID);
+                    }
+                    server.sendToAllUDP(data);
+               }else if(object instanceof HitData){
+                    HitData data = (HitData)object;
+                    uRData[data.unitID].health -= data.dmg;
+                    if(uRData[data.unitID].health < 0)
+                        uRData[data.unitID].health = 0;
+                    server.sendToAllUDP(uRData[data.unitID]);
+               }else if(object instanceof ManaUseData){
+                    ManaUseData data = (ManaUseData)object;
+                    uRData[data.unitID].mana -= data.manaCost;
+                    if(uRData[data.unitID].mana < 0)
+                        uRData[data.unitID].mana = 0;
+                    server.sendToAllUDP(uRData[data.unitID]);
 
                }
 

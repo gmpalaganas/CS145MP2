@@ -46,6 +46,8 @@ public class MainGameState extends BasicGameState{
     private final float MANA_REGEN = 6.5f;
     private final float HEALTH_REGEN = 2f;
 
+    private int counter;
+
     private final String RESOURCE_DIR = "../res/img/";
 
     private TiledMap map;
@@ -96,6 +98,7 @@ public class MainGameState extends BasicGameState{
                     UnitMovementData uData = (UnitMovementData)object;
 
                     Point p = new Point(uData.x, uData.y, uData.direction); 
+
                     if(isFirstLoad){
                         isFirstLoad = false;
                         units[uData.unitID].setLocation(p);
@@ -106,10 +109,20 @@ public class MainGameState extends BasicGameState{
                 }else if(object instanceof UnitResourceData){
                    UnitResourceData rdata = (UnitResourceData)object;
                    units[rdata.unitID].setResources(rdata);
-                }
-                else if(object instanceof ProjectileMovementData){
-                    ProjectileMovementData pmdata = (ProjectileMovementData)object;
-                    projectiles.get(pmdata.projectileID).setLocation(pmdata.point);
+                }else if(object instanceof ProjectileMovementData){
+                    synchronized(projectiles){
+                        try{
+                            ProjectileMovementData pmdata = (ProjectileMovementData)object;
+                            projectiles.get(pmdata.projectileID).setLocation(pmdata.point);
+                        }catch(NullPointerException e){
+                        }
+                        
+                    }
+                }else if(object instanceof ProjectileRemovalData){
+                    synchronized(projectiles){
+                        ProjectileRemovalData rpdata = (ProjectileRemovalData)object;
+                        projectiles.remove(rpdata.projectileID);
+                    }
                 }else if(object instanceof NewProjectileData){
                     NewProjectileData npdata = (NewProjectileData)object;
                     fire(npdata);
@@ -134,6 +147,7 @@ public class MainGameState extends BasicGameState{
 
         map.render(0,0);
 
+
         for(int i = 0; i < NUM_PLAYERS; i++)
             units[i].render(g);
 
@@ -145,10 +159,8 @@ public class MainGameState extends BasicGameState{
     public void update(GameContainer gc, StateBasedGame sbg, int delta) throws SlickException{
 
         Input in = gc.getInput();
-        updateProjectiles(delta);
-
-        if(units[0].getHitBox().intersects(units[1].getHitBox()))
-            System.out.println("BUNGUAN");
+        checkProjectileHit();
+        updateProjectiles(gc,delta);
 
         if(player != -1){
             UnitMovementData uData = new UnitMovementData();
@@ -214,7 +226,17 @@ public class MainGameState extends BasicGameState{
             Animation anim = projectileAnimation[data.unitID];
             String name = projectileNames[data.unitID];
             Projectile newPew = new Projectile(name,sheet,anim,16,10,data.source,data.unitID);
-            projectiles.put(data.projectileID,newPew);
+
+            Unit unit = units[data.unitID];
+
+            if(unit.getMana() >= newPew.getManaCost()){
+                ManaUseData mana = new ManaUseData();
+                mana.manaCost = newPew.getManaCost();
+                mana.unitID = data.unitID;
+                client.send(mana);
+                projectiles.put(data.projectileID,newPew);
+            }
+
         }catch(SlickException e){
 
         }
@@ -223,30 +245,72 @@ public class MainGameState extends BasicGameState{
     }
 
 
-    public synchronized void updateProjectiles(int delta){
+    public void updateProjectiles(GameContainer gc, int delta){
         
 
-        for(Integer i:projectiles.keySet()){
-            
-            int id = i.intValue();
-            ProjectileMovementData data = new ProjectileMovementData();
-            data.projectileID = id;
-            data.point = projectiles.get(i).getLocation();
-            data.unitID = projectiles.get(i).getSourceID();
-            data.delta = delta;
-            client.send(data);
+        synchronized(projectiles){
+            for(Integer i : projectiles.keySet()){
 
+                int id = i.intValue();
+                ProjectileMovementData data = new ProjectileMovementData();
+                ProjectileRemovalData rData = new ProjectileRemovalData();
+                data.projectileID = id;
+                rData.projectileID = id;
+                data.point = projectiles.get(i).getLocation();
+                data.unitID = projectiles.get(i).getSourceID();
+                data.delta = delta;
+                if(isInMap(gc,data.point))
+                    client.send(data);
+                else
+                    client.send(rData);
+
+            }
         }
         
 
     }
 
+   public boolean isInMap(GameContainer gc, Point p){
+       
+       boolean ret = (p.x <= gc.getWidth()) && (p.x >= 0);
+       ret &= (p.y <= gc.getHeight()) && (p.y >= 0); 
+
+       return ret;
+
+   }
+
     public synchronized void renderProjectiles(Graphics g){
         
-        for(Projectile p : projectiles.values()){
-            
-            p.render(g);
+        synchronized(projectiles){
+            for(Projectile p : projectiles.values()){
+                
+                p.render(g);
 
+            }
+        }
+
+    }
+
+    public void checkProjectileHit(){
+        
+        synchronized(projectiles){
+            for(Integer id : projectiles.keySet()){
+                Projectile p = projectiles.get(id);
+                for(int i = 0; i < NUM_PLAYERS; i++){
+
+                    if(p.getHitBox().intersects(units[i].getHitBox()) && i != p.getSourceID()){
+                        HitData data = new HitData();
+                        ProjectileRemovalData rData = new ProjectileRemovalData();
+                        data.dmg = p.getDamage();
+                        data.unitID = i;
+                        data.projectileID = id;
+                        rData.projectileID = id;
+                        client.send(rData);
+                        client.send(data);              
+                    }
+
+                }
+            }
         }
 
     }
