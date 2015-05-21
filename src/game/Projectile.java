@@ -67,9 +67,13 @@ public class Projectile{
 
 
     public void render(Graphics g){
-       
+        
+        //Color prev = g.getColor();
+        //g.setColor(Color.red);
+        //g.draw(hitBox);
         anim.draw(curLocation.x,curLocation.y);
-
+        //g.setColor(prev);
+        
     }
 
     public Rectangle getHitBox(){

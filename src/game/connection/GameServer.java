@@ -9,8 +9,6 @@ import game.Projectile;
 import game.Unit;
 import org.newdawn.slick.Input;
 
-import java.util.ArrayList;
-
 import org.newdawn.slick.Graphics;
 import org.newdawn.slick.Animation;
 import org.newdawn.slick.SpriteSheet;
@@ -18,9 +16,9 @@ import org.newdawn.slick.geom.Rectangle;
 import org.newdawn.slick.SlickException;
 import org.newdawn.slick.Color;
 
-
 import java.io.*;
 import java.util.HashMap;
+import java.util.Random;
 
 public class GameServer{
 
@@ -46,7 +44,12 @@ public class GameServer{
     private UnitResourceData uRData[];
     
     private RegenThread regenThread;
+    private SpawnProjectilesThread projThread;
+
     private int curProjectileID;
+    private int lastProjectileID;
+
+    private int numReady = 0;
 
     private HashMap<Integer, ProjectileMovementData> pMData; 
 
@@ -69,7 +72,8 @@ public class GameServer{
             uRData[i].unitID = i;
             
         }
-
+        
+        lastProjectileID = -1;
 
         uMData[0].unitID = 0;
         uMData[0].x = MIN_X;
@@ -86,6 +90,7 @@ public class GameServer{
         registerClasses();
 
         regenThread = new RegenThread();
+        projThread = new SpawnProjectilesThread();
 
     }
 
@@ -104,6 +109,7 @@ public class GameServer{
         kryo.register(ProjectileRemovalData.class);
         kryo.register(HitData.class);
         kryo.register(ManaUseData.class);
+        kryo.register(WinData.class);
 
     }
     
@@ -119,10 +125,12 @@ public class GameServer{
 
     public boolean checkPlayerCollision(){
         
-        boolean ret = inRange(uMData[0].x,uMData[1].x, UNIT_RADIUS);
-        ret &= inRange(uMData[0].y, uMData[1].y, UNIT_RADIUS);
+        Rectangle r1 = new Rectangle(uMData[0].x,uMData[0].y,40,40);
+        Rectangle r2 = new Rectangle(uMData[1].x,uMData[1].y,40,40);
 
-        return ret;
+        return r1.intersects(r2);
+
+
     }
 
     public boolean inRange(float x, float center, int radius){
@@ -157,8 +165,7 @@ public class GameServer{
                 data.type = "REQUEST";
                 data.msg = "UNIT STATS";
                 connection.sendTCP(data);
-                regenThread.start();
-           }
+          }
        }
 
        public void disconnected(Connection connection){
@@ -236,6 +243,16 @@ public class GameServer{
                             npd.source = dat.point;
                             connection.sendUDP(npd);
                         }
+                    }else if(data.msg.equals("READY")){
+                        numReady++;
+                        if(numReady == 2){
+                            MessageData msd = new MessageData();
+                            msd.msg = "START";
+                            server.sendToAllUDP(msd);
+                            regenThread.start();
+                            projThread.start();
+ 
+                        }
                     }
                }else if(object instanceof UnitStatData){
                     UnitStatData data = (UnitStatData)object;
@@ -256,10 +273,23 @@ public class GameServer{
                     server.sendToAllUDP(data);
                }else if(object instanceof HitData){
                     HitData data = (HitData)object;
-                    uRData[data.unitID].health -= data.dmg;
-                    if(uRData[data.unitID].health < 0)
-                        uRData[data.unitID].health = 0;
-                    server.sendToAllUDP(uRData[data.unitID]);
+                    synchronized(pMData){
+                        if(projectileStillAlive(data.projectileID) && data.projectileID != lastProjectileID){
+                            uRData[data.unitID].health -= data.dmg;
+
+                            if(uRData[data.unitID].health < 0)
+                                uRData[data.unitID].health = 0;
+
+                            ProjectileRemovalData rData = new ProjectileRemovalData();
+                            rData.projectileID = data.projectileID;
+                            lastProjectileID = data.projectileID;
+
+                            pMData.remove(data.projectileID);
+                            server.sendToAllUDP(rData);
+                            server.sendToAllUDP(uRData[data.unitID]);
+
+                        }
+                    }
                }else if(object instanceof ManaUseData){
                     ManaUseData data = (ManaUseData)object;
                     uRData[data.unitID].mana -= data.manaCost;
@@ -267,9 +297,24 @@ public class GameServer{
                         uRData[data.unitID].mana = 0;
                     server.sendToAllUDP(uRData[data.unitID]);
 
+               }else if(object instanceof WinData){
+                    try{
+                        WinData data = (WinData)object;
+                        System.out.println("Player " + (data.playerID + 1) + "wins!" );
+                        server.sendToAllUDP(data);
+                        Thread.sleep(1000);
+                        System.exit(0);
+                    }catch(InterruptedException e){ 
+                    }
                }
 
        }
+
+    }
+    
+    public synchronized boolean projectileStillAlive(int id){
+        Integer i = id; 
+        return pMData.keySet().contains(i);
 
     }
 
@@ -283,7 +328,12 @@ public class GameServer{
 
                while(isRunning){
                    for(int i = 0; i < NUM_PLAYERS; i++){
+                        
+                       if(uRData[i].health < 1){
+                            MessageData data = new MessageData();;
 
+                       }
+                       
                        if(uRData[i].mana < uSData[i].maxMana)
                             uRData[i].mana += uSData[i].manaRegen/10f;
                         
@@ -302,6 +352,78 @@ public class GameServer{
 
         public void terminate(){
             isRunning = false;
+        }
+
+    }
+
+    private class SpawnProjectilesThread extends Thread{
+        
+        private boolean isRunning = true;
+
+        public void run(){
+            
+            try{
+
+                while(isRunning){
+                    
+                    Thread.sleep(1000);
+                    for(int i = 0; i < NUM_PLAYERS; i++){
+                        NewProjectileData data = new NewProjectileData();
+                        Point p = generateSource(uMData[i].x, uMData[i].y, uMData[i].direction);
+                        data.unitID = NUM_PLAYERS;
+                        data.projectileID = curProjectileID;
+                        data.source = p;
+                        curProjectileID++;
+                        server.sendToAllUDP(data);
+                    }
+
+
+                }
+                
+            }catch(InterruptedException e){
+
+            }
+        }
+
+        public Point generateSource(float x, float y, Direction direction){
+
+            Random rng = new Random();
+            
+            int rand = rng.nextInt(4);
+
+            switch(rand){
+                
+                case 0: {
+                    y = MIN_Y;
+                    direction = Direction.DOWN;
+
+                }break;
+
+                case 1: {
+                    y = MAX_Y;
+                    direction = Direction.UP;
+
+                }break;
+
+                case 2: {
+                    x = MAX_X;
+                    direction = Direction.LEFT;
+
+                }break;
+
+                case 3: {
+                    x = MIN_X;
+                    direction = Direction.RIGHT;
+
+                }break;
+            }
+            
+            return new Point(x,y,direction);
+        }
+
+        public void terminate(){
+            isRunning = false;
+
         }
 
     }

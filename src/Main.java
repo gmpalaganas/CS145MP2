@@ -7,6 +7,7 @@ import org.newdawn.slick.SlickException;
 import game.Game;
 import game.GameContainer;
 
+import javax.swing.*;
 
 //Main Class of the Game
 public class Main{
@@ -15,7 +16,10 @@ public class Main{
     public static void main(String args[]){
         
         try{
-            Game game = new Game("Magus Arena","localhost");
+
+            String add = JOptionPane.showInputDialog(null,"Input Server Address");
+
+            Game game = new Game("Magus Arena",add);
             GameContainer container = new GameContainer(game);
 
             container.start();

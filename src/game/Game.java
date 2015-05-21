@@ -21,6 +21,10 @@ import com.esotericsoftware.kryo.Kryo;
 public class Game extends StateBasedGame{
     
     private MainGameState mainGameState;
+    private WelcomeState welcomeState;
+    private WaitingState waitState;
+    private WinState winState;
+    private LoseState loseState;
     private GameClient client;
 
     private final int TIMEOUT = 5000;
@@ -32,11 +36,17 @@ public class Game extends StateBasedGame{
 
     private final int NUM_PLAYERS = 2;
 
+    private int playerID = -1;
+
 
     public Game(String name, String addr) throws SlickException,IOException{
         super(name);
         client = new GameClient();
         mainGameState = new MainGameState(client,addr);
+        welcomeState = new WelcomeState(client,addr);
+        waitState = new WaitingState(client,addr);
+        loseState = new LoseState(client,addr);
+        winState = new WinState(client,addr);
 
         try{
 
@@ -48,19 +58,17 @@ public class Game extends StateBasedGame{
                         mainGameState.setPlayer(data.id);      
                     }else if(object instanceof MessageData){
                         MessageData data = (MessageData)object;
-                        if(data.type.equals("REQUEST")){
-                            if(data.msg.equals("UNIT STATS")){
-                                for(int i = 0; i < NUM_PLAYERS; i++){
-                                    UnitStatData udata = new UnitStatData();
-                                    udata.unitID = i;
-                                    udata.maxHealth = MAX_HEALTH;
-                                    udata.maxMana = MAX_MANA;
-                                    udata.healthRegen = HEALTH_REGEN;
-                                    udata.manaRegen = MANA_REGEN;
-                                    client.send(udata);
-                                }
-
+                        if(data.msg.equals("UNIT STATS")){
+                            for(int i = 0; i < NUM_PLAYERS; i++){
+                                UnitStatData udata = new UnitStatData();
+                                udata.unitID = i;
+                                udata.maxHealth = MAX_HEALTH;
+                                udata.maxMana = MAX_MANA;
+                                udata.healthRegen = HEALTH_REGEN;
+                                udata.manaRegen = MANA_REGEN;
+                                client.send(udata);
                             }
+
                         }
                     }
 
@@ -81,8 +89,16 @@ public class Game extends StateBasedGame{
 
 
     public void initStatesList(GameContainer gc) throws SlickException{
+        addState((GameState)welcomeState);
         addState((GameState)mainGameState);
+        addState((GameState)waitState);
+        addState((GameState)winState);
+        addState((GameState)loseState);
         
+    }
+
+    public void setPlayerID(int i){
+        playerID = i;
     }
     
 

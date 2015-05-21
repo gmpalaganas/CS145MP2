@@ -9,5 +9,6 @@ public class NewProjectileData{
     public int projectileID;
     public int unitID;
     public Point source;
+    public int delta;
 
 }

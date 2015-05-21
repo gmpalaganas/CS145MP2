@@ -5,7 +5,7 @@ import org.newdawn.slick.SlickException;
 
 public class GameContainer extends AppGameContainer{
 
-    private final int WINDOW_HEIGHT = 640;
+    private final int WINDOW_HEIGHT = 690;
     private final int WINDOW_WIDTH = 1200;
     private final boolean FULLSCREEN = false;
 
@@ -13,6 +13,7 @@ public class GameContainer extends AppGameContainer{
         super(game);
         setDisplayMode(WINDOW_WIDTH,WINDOW_HEIGHT, FULLSCREEN);
         setShowFPS(false);
+        setAlwaysRender(true);
     }
 
 }

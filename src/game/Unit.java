@@ -6,6 +6,7 @@ import org.newdawn.slick.SpriteSheet;
 import org.newdawn.slick.geom.Rectangle;
 import org.newdawn.slick.SlickException;
 import org.newdawn.slick.Color;
+import org.newdawn.slick.Image;
 
 import game.point.*;
 import game.connection.*;
@@ -13,6 +14,7 @@ import game.connection.*;
 public class Unit{
 
     private SpriteSheet sheetUp, sheetDown, sheetLeft, sheetRight;
+    private Image portrait;
     
     private Animation animUp, animDown,  animLeft, animRight;
     private Animation curAnimation;
@@ -56,6 +58,7 @@ public class Unit{
         sheetDown = new SpriteSheet(dir + name + "/down.png", size, size);
         sheetLeft = new SpriteSheet(dir + name + "/left.png", size, size);
         sheetRight = new SpriteSheet(dir + name + "/right.png", size, size);
+        portrait = new Image(dir + name + "/portrait.png");
 
         animUp = new Animation(sheetUp,ANIMATION_SPEED);
         animDown = new Animation(sheetDown,ANIMATION_SPEED);
@@ -174,6 +177,7 @@ public class Unit{
     public float getManaRegen(){ return manaRegen; }
     public float getMaxHealth(){ return maxHealth; }
     public float getMaxMana(){ return maxMana; }
+    public Image getPortrait(){ return portrait; }
 
 }
 
